@@ -1,16 +1,10 @@
-// https://rntlab.com/question/how-to-know-and-or-set-the-wifi-channel-on-an-esp32/?utm_source=pocket_saves
-// https://github.com/HarringayMakerSpace/ESP-Now/blob/master/espnow-sensor-minimal/espnow-sensor-minimal.ino
-// https://randomnerdtutorials.com/esp32-esp-now-wi-fi-web-server/
-
 #include "ESPAsyncWebServer.h"
 #include <Arduino_JSON.h>
 #include <Arduino.h>
-#include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
-#include "BluetoothSerial.h"
 
 constexpr char WIFI_SSID[] = "rda0";
 constexpr char WIFI_PASS[] = "pippo1243";
@@ -35,11 +29,6 @@ typedef struct struttura_dati {
 
 struttura_dati LettureSensori;
 
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
-
-BluetoothSerial SerialBT;
 JSONVar board;
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
@@ -159,11 +148,6 @@ if (!!window.EventSource) {
 </body>
 </html>)rawliteral";
 
-void initBT() {
-  SerialBT.begin("ESP32-sensori");    
-  Serial.println("Dispositivo avviato, puoi accoppiarlo con bluetooth...");
-}
-
 void initWiFi() {
     WiFi.mode(WIFI_MODE_APSTA);
 
@@ -185,11 +169,6 @@ void initWiFi() {
 }
 
 void initEspNow() {
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("ESP NOW failed to initialize");
-        while (1);
-    }
-    esp_now_register_recv_cb(suDatiRicevuti);
 }
 
 void setup() {
@@ -197,8 +176,6 @@ void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disabilita brownout detector
 
   initWiFi();
-  initEspNow();
-  initBT();
 
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
